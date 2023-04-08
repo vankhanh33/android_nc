@@ -32,7 +32,7 @@ public class UpdateActivity extends AppCompatActivity implements ConstractUpdate
         btnupdate = findViewById(R.id.buttonUpdate);
         User user = (User) getIntent().getSerializableExtra("user");
         idtxt.setText(user.getId()+"");
-        usertxt.setText(user.getEmail());
+        usertxt.setText(user.getUser_name());
         passtxt.setText(user.getPassword());
         mIPresenter = new PresenterUpdate(this);
         btnupdate.setOnClickListener(view -> {

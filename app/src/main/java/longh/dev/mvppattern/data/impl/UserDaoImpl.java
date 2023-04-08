@@ -29,11 +29,11 @@ public class UserDaoImpl implements UserDao {
         Cursor cursor = mDatabase.rawQuery("select * from user",null);
         for (int i = 0 ; i < cursor.getCount(); i++ ){
             cursor.moveToPosition(i);
-            if(user.getEmail().equals(cursor.getString(1)) || user.getEmail().isEmpty() || user.getPassword().isEmpty()){
+            if(user.getUser_name().equals(cursor.getString(1)) || user.getUser_name().isEmpty() || user.getPassword().isEmpty()){
                 return false;
             }else{
                 ContentValues contentValues = new ContentValues();
-                contentValues.put("user_name",user.getEmail());
+                contentValues.put("user_name",user.getUser_name());
                 contentValues.put("password",user.getPassword());
                 mDatabase.insert("user",null,contentValues);
                 return  true;
@@ -49,10 +49,10 @@ public class UserDaoImpl implements UserDao {
         Cursor cursor = mDatabase.rawQuery("select * from user",null);
         for(int i = 0; i < cursor.getCount(); i++){
             cursor.moveToPosition(i);
-            if(user.getEmail().equals(cursor.getString(1)) && user.getId() != cursor.getInt(0)) return false;
+            if(user.getUser_name().equals(cursor.getString(1)) && user.getId() != cursor.getInt(0)) return false;
         }
         ContentValues contentValues = new ContentValues();
-        contentValues.put("user_name",user.getEmail());
+        contentValues.put("user_name",user.getUser_name());
         contentValues.put("password",user.getPassword());
         mDatabase.update("user", contentValues,"id =?", new String[]{user.getId()+""});
         return true;

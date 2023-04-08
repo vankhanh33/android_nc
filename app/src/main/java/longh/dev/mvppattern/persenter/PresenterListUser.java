@@ -16,15 +16,21 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
+import longh.dev.mvppattern.constract.Api;
 import longh.dev.mvppattern.constract.ConstractListUser;
+import longh.dev.mvppattern.data.remote.Constants;
 import longh.dev.mvppattern.data.remote.RestApi;
 import longh.dev.mvppattern.data.Database;
 import longh.dev.mvppattern.data.DatabaseDao;
 import longh.dev.mvppattern.data.dao.UserDao;
 import longh.dev.mvppattern.data.model.User;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
+//import okhttp3.OkHttpClient;
+//import okhttp3.Request;
+//import okhttp3.Response;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class PresenterListUser implements ConstractListUser.IPresenter {
     ConstractListUser.IView mIView;
@@ -37,60 +43,33 @@ public class PresenterListUser implements ConstractListUser.IPresenter {
     @Override
     public void deleteItem(int id) {
         UserDao mUserDao = DatabaseDao.getInstance().getUserDao();
-        if(mUserDao.delete(id) == true){
+        if (mUserDao.delete(id) == true) {
             mIView.showDeleteSuccess();
-        }else mIView.showDeleteFailed();
+        } else mIView.showDeleteFailed();
     }
 
     @Override
     public void loadData() {
-        new GetDataTask().execute();
-    }
-    public class GetDataTask extends AsyncTask<Void, Void, List<User>> {
-        private static final String URL_ACCOUNTS = "http://lunaduca-001-site1.dtempurl.com/account.php";
-        private final OkHttpClient client = new OkHttpClient();
-        private final Gson gson = new Gson();
-
-        // phương thức này sẽ được gọi trên một thread khác
-        @Override
-        protected List<User> doInBackground(Void... voids) {
-            // tạo một request để gửi đến server
-            Request request = new Request.Builder().url(URL_ACCOUNTS).build();
-
-            try {
-                // gửi request đi và nhận lại response từ server
-                Response response = client.newCall(request).execute();
-
-                // kiểm tra response có thành công không
-                if (!response.isSuccessful()) {
-                    throw new IOException("Unexpected code " + response);
+        Retrofit retrofit = new Retrofit.Builder().baseUrl(Constants.API_URL).addConverterFactory(GsonConverterFactory.create()).build();
+        Api api = retrofit.create(Api.class);
+        api.getAllAccounts().enqueue(new Callback<List<User>>() {
+            @Override
+            public void onResponse(Call<List<User>> call, retrofit2.Response<List<User>> response) {
+                if (response.isSuccessful()) {
+                    List<User> mList = response.body();
+                    mIView.updateUserList(mList);
+                    // xử lý danh sách account
+                } else {
+                    // xử lý khi response không thành công
                 }
-
-                // chuyển đổi dữ liệu từ response body sang List<User> bằng Gson
-                Type listType = new TypeToken<List<User>>(){}.getType();
-                String responseBodyJson = response.body().string();
-                List<User> mList = gson.fromJson(responseBodyJson, listType);
-                return mList;
-            } catch (IOException e) {
-                e.printStackTrace();
             }
 
-            return null;
-        }
-
-        // phương thức được gọi khi background task đã thực hiện xong, đối số accounts chính là kết quả trả về từ doInBackground
-        @Override
-        protected void onPostExecute(List<User> mList) {
-            if (mList != null) {
-                // sử dụng danh sách accounts để hiển thị lên giao diện
-                // ví dụ: gán danh sách accounts cho một Adapter, rồi gán Adapter đó cho một ListView, RecyclerView, hay ListView
-                // adapter.setData(accounts);
-                // listView.setAdapter(adapter);
-                mIView.updateUserList(mList);
-            } else {
-                Toast.makeText((Activity) mIView, "Failed to fetch accounts", Toast.LENGTH_SHORT).show();
+            @Override
+            public void onFailure(Call<List<User>> call, Throwable t) {
+                Toast.makeText((Activity) mIView, "Xảy ra lỗi", Toast.LENGTH_SHORT).show();
             }
-        }
+        });
+
     }
 
 }
