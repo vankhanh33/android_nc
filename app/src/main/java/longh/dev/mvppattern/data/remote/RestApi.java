@@ -12,6 +12,7 @@ public class RestApi {
 //    private static final String JOB_PATH = "json.php";
 
     public static String getJsonString(String url) throws IOException {
+        //HttpURLConnection
         HttpURLConnection urlConnection = null;
         BufferedReader reader = null;
         String resultJsonString = null;
