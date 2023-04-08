@@ -57,7 +57,7 @@ public class UserAdapter extends BaseAdapter {
         ImageButton btnDelete = row.findViewById(R.id.btn_delete);
         ImageButton btn_Update = row.findViewById(R.id.btn_edit);
         User user = mListUsers.get(i);
-        txtUser.setText(user.getEmail());
+        txtUser.setText(user.getUser_name());
         txtID.setText(user.getId()+"");
         txtPass.setText(user.getPassword());
         btnDelete.setOnClickListener(new View.OnClickListener() {
