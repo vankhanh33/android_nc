@@ -7,51 +7,24 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+
 public class RestApi {
 //    private static final String BASE_URL = "https://example.com/"; // thay BASE_URL bằng địa chỉ server của bạn
 //    private static final String JOB_PATH = "json.php";
 
     public static String getJsonString(String url) throws IOException {
         //HttpURLConnection
-        HttpURLConnection urlConnection = null;
-        BufferedReader reader = null;
-        String resultJsonString = null;
-        // Tạo URL kết nối
-        URL requestUrl = new URL(url);
+        OkHttpClient client = new OkHttpClient();
 
-        try {
-            // Kết nối đến URL
-            urlConnection = (HttpURLConnection) requestUrl.openConnection();
-            urlConnection.setRequestMethod("GET");
-            urlConnection.connect();
+        Request request = new Request.Builder()
+                .url(url)
+                .build();
 
-            // Đọc dữ liệu từ response
-            InputStream inputStream = urlConnection.getInputStream();
-            StringBuilder builder = new StringBuilder();
-            reader = new BufferedReader(new InputStreamReader(inputStream));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                builder.append(line + "\n");
-            }
-            if (builder.length() == 0) {
-                return null;
-            }
-            resultJsonString = builder.toString();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (urlConnection != null) {
-                urlConnection.disconnect();
-            }
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (final IOException e) {
-                    e.printStackTrace();
-                }
-            }
+        try (Response response = client.newCall(request).execute()) {
+            return response.body().string();
         }
-
-        return resultJsonString;
     }
 }
