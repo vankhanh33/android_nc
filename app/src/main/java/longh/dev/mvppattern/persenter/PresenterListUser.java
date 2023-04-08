@@ -2,12 +2,17 @@ package longh.dev.mvppattern.persenter;
 
 import android.app.Activity;
 import android.os.AsyncTask;
+import android.widget.Toast;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,6 +22,9 @@ import longh.dev.mvppattern.data.Database;
 import longh.dev.mvppattern.data.DatabaseDao;
 import longh.dev.mvppattern.data.dao.UserDao;
 import longh.dev.mvppattern.data.model.User;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 public class PresenterListUser implements ConstractListUser.IPresenter {
     ConstractListUser.IView mIView;
@@ -38,35 +46,51 @@ public class PresenterListUser implements ConstractListUser.IPresenter {
     public void loadData() {
         new GetDataTask().execute();
     }
-    private class GetDataTask extends AsyncTask<Void, Void, String> {
+    public class GetDataTask extends AsyncTask<Void, Void, List<User>> {
+        private static final String URL_ACCOUNTS = "http://lunaduca-001-site1.dtempurl.com/account.php";
+        private final OkHttpClient client = new OkHttpClient();
+        private final Gson gson = new Gson();
+
+        // phương thức này sẽ được gọi trên một thread khác
         @Override
-        protected String doInBackground(Void... voids) {
-            String jsonString = null;
+        protected List<User> doInBackground(Void... voids) {
+            // tạo một request để gửi đến server
+            Request request = new Request.Builder().url(URL_ACCOUNTS).build();
 
             try {
-                jsonString = RestApi.getJsonString("http://lunaduca-001-site1.dtempurl.com/account.php");
+                // gửi request đi và nhận lại response từ server
+                Response response = client.newCall(request).execute();
+
+                // kiểm tra response có thành công không
+                if (!response.isSuccessful()) {
+                    throw new IOException("Unexpected code " + response);
+                }
+
+                // chuyển đổi dữ liệu từ response body sang List<User> bằng Gson
+                Type listType = new TypeToken<List<User>>(){}.getType();
+                String responseBodyJson = response.body().string();
+                List<User> mList = gson.fromJson(responseBodyJson, listType);
+                return mList;
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            return jsonString;
+
+            return null;
         }
 
+        // phương thức được gọi khi background task đã thực hiện xong, đối số accounts chính là kết quả trả về từ doInBackground
         @Override
-        protected void onPostExecute(String result) {
-            super.onPostExecute(result);
-            List<User> userList = new ArrayList<>();
-            try {
-                JSONArray jsonArray = new JSONArray(result);
-                for (int i = 0; i < jsonArray.length(); i++) {
-                    JSONObject arrObject = jsonArray.getJSONObject(i);
-                    userList.add(new User(arrObject.getInt("id"), arrObject.getString("user_name"), arrObject.getString("password")));
-                }
-            }catch (JSONException e){
-                e.printStackTrace();
+        protected void onPostExecute(List<User> mList) {
+            if (mList != null) {
+                // sử dụng danh sách accounts để hiển thị lên giao diện
+                // ví dụ: gán danh sách accounts cho một Adapter, rồi gán Adapter đó cho một ListView, RecyclerView, hay ListView
+                // adapter.setData(accounts);
+                // listView.setAdapter(adapter);
+                mIView.updateUserList(mList);
+            } else {
+                Toast.makeText((Activity) mIView, "Failed to fetch accounts", Toast.LENGTH_SHORT).show();
             }
-            mIView.updateUserList(userList);
         }
-        // Hiển thị kết quả từ json.php vào TextView
-
     }
+
 }
